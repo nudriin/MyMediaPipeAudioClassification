@@ -1,11 +1,15 @@
 package com.nudriin.mymediapipeaudioclassification
 
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import com.google.mediapipe.tasks.components.containers.Classifications
 import com.nudriin.mymediapipeaudioclassification.databinding.ActivityMainBinding
 import java.text.NumberFormat
+import android.Manifest
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
@@ -17,6 +21,9 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         initializeAudioClassifierHelper()
+        setOnClickListener()
+        updateButtonStates()
+        requestPermissionsIfNeeded()
     }
 
     private fun initializeAudioClassifierHelper() {
@@ -80,5 +87,26 @@ class MainActivity : AppCompatActivity() {
         if (::audioClassifierHelper.isInitialized) {
             audioClassifierHelper.stopAudioClassification()
         }
+    }
+
+    private fun allPermissionsGranted() =
+        ContextCompat.checkSelfPermission(
+            this,
+            REQUIRED_PERMISSION
+        ) == PackageManager.PERMISSION_GRANTED
+
+    private val requestPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            val message = if (isGranted) "Permission granted" else "Permission denied"
+            Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+        }
+
+    private fun requestPermissionsIfNeeded() {
+        if (!allPermissionsGranted()) {
+            requestPermissionLauncher.launch(REQUIRED_PERMISSION)
+        }
+    }
+    companion object {
+        private const val REQUIRED_PERMISSION = Manifest.permission.RECORD_AUDIO
     }
 }
